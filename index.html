@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Translation Lists 6 - Premium Edition</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+<style>
+:root {
+    --primary: #a5d6a7; 
+    --primary-dark: #2e7d32;
+    --bg-gradient: linear-gradient(135deg, #e8f5e9 0%, #a5d6a7 100%); 
+    --color-en: #3f51b5;
+    --color-es: #d32f2f;
+    --color-success: #4caf50;
+    --color-error: #f44336;
+}
+
+body {
+    margin: 0; font-family: "Segoe UI", Tahoma, sans-serif;
+    background: var(--bg-gradient); min-height: 100vh;
+    padding: 20px; display: flex; flex-direction: column; align-items: center;
+}
+
+.app {
+    width: 100%; max-width: 850px;
+    background: rgba(255, 255, 255, 0.98); border-radius: 30px;
+    box-shadow: 0 15px 40px rgba(0,0,0,0.1); overflow: hidden;
+    display: flex; flex-direction: column;
+}
+
+header { 
+    background: var(--primary); color: var(--primary-dark); padding: 20px; 
+    text-align: center; display: flex; justify-content: center; align-items: center; gap: 15px;
+    font-size: 1.8rem; font-weight: bold;
+}
+header img { width: 35px; border-radius: 50%; border: 2px solid white; }
+
+.exam-bar { background: #333; color: white; padding: 10px 20px; display: none; justify-content: space-between; align-items: center; font-size: 1rem; }
+
+.progress-container { width: 100%; height: 8px; background: #e0e0e0; }
+.progress-bar { width: 0%; height: 100%; background: #81c784; transition: width 0.3s; }
+
+.mode-selector { display: flex; padding: 12px; gap: 10px; background: #fff; border-bottom: 1px solid #eee; }
+.mode-btn { flex: 1; padding: 12px; border: 1px solid #eee; border-radius: 15px; background: #fafafa; color: #777; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: 0.2s; font-size: 0.9rem; }
+.mode-btn img { width: 22px; border-radius: 50%; }
+
+.mode-btn.active.en-es { background: var(--color-en); color: white; border-color: var(--color-en); }
+.mode-btn.active.es-en { background: var(--color-es); color: white; border-color: var(--color-es); }
+.mode-btn.exam.active { background: var(--color-success); color: white; border-color: var(--color-success); }
+
+.controls-top { padding: 15px; text-align: center; }
+select { 
+    padding: 12px; border-radius: 15px; border: 3px solid var(--primary); 
+    font-weight: 800; width: 95%; cursor: pointer; background: white; 
+    font-size: 1.1rem; color: var(--primary-dark); font-family: "Comic Sans MS", cursive, sans-serif;
+}
+
+.mix-panel { display: none; background: #f9f9f9; padding: 15px; margin: 10px; border-radius: 15px; border: 1px solid #ddd; }
+.mix-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; }
+
+.scene { width: 100%; height: 360px; perspective: 1000px; display: flex; justify-content: center; align-items: center; }
+.card { width: 90%; height: 300px; position: relative; transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1); transform-style: preserve-3d; cursor: pointer; }
+.card.is-flipped { transform: rotateY(180deg); }
+
+.card-face { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: 30px; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 30px; box-sizing: border-box; border: 6px solid #fff; box-shadow: 0 10px 25px rgba(0,0,0,0.07); text-align: center; }
+
+.lang-en { background: var(--color-en); color: white; }
+.lang-es { background: var(--color-es); color: white; }
+.card-face.back { transform: rotateY(180deg); }
+
+.flag-label { width: 55px; height: 55px; margin-bottom: 10px; border-radius: 50%; border: 3px solid white; }
+.main-text { font-size: 1.45rem; font-weight: 700; line-height: 1.3; margin-bottom: 15px; }
+
+.sound-btn { background: rgba(255,255,255,0.2); border: 2px solid #fff; color: #fff; border-radius: 50%; width: 50px; height: 50px; cursor: pointer; font-size: 1.3rem; transition: 0.2s; }
+.sound-btn:hover { background: rgba(255,255,255,0.4); }
+
+.card.exam-active .back .sound-btn { position: absolute; top: 15px; right: 15px; width: 42px; height: 42px; font-size: 1.1rem; }
+
+.exam-actions { display: none; gap: 40px; margin-top: 20px; }
+.action-btn { border: none; border-radius: 15px; width: 85px; height: 65px; color: white; font-size: 2.2rem; cursor: pointer; box-shadow: 0 6px 0 rgba(0,0,0,0.2); transition: 0.1s; }
+.action-btn:active { transform: translateY(4px); box-shadow: 0 2px 0 rgba(0,0,0,0.2); }
+.btn-yes { background: var(--color-success); }
+.btn-no { background: var(--color-error); }
+
+.nav-controls { display: flex; justify-content: space-between; align-items: center; padding: 25px 45px; background: #fafafa; border-top: 1px solid #eee; }
+
+.nav-btn { 
+    background: var(--primary); color: var(--primary-dark); border: none; 
+    width: 70px; height: 70px; border-radius: 20px; font-size: 2rem; 
+    cursor: pointer; display: flex; align-items: center; justify-content: center; 
+    box-shadow: 0 6px 0 #81c784; transition: 0.2s; 
+}
+.nav-btn:hover { background: #b9e1bc; }
+.nav-btn:active { transform: translateY(3px); box-shadow: 0 3px 0 #81c784; }
+.nav-btn:disabled { background: #e0e0e0; box-shadow: 0 6px 0 #bdbdbd; color: #9e9e9e; cursor: not-allowed; transform: none; }
+
+.counter { font-weight: 900; color: #444; font-size: 1.3rem; }
+</style>
+</head>
+<body>
+
+<div class="app">
+    <div class="exam-bar" id="examBar">
+        <span>⏱️ <span id="timer">00:00</span></span>
+        <span>🔥 <span id="streak">0</span></span>
+        <span>✅ <span id="scoreCorrect">0</span> | ❌ <span id="scoreWrong">0</span></span>
+    </div>
+    <div class="progress-container"><div id="progressBar" class="progress-bar"></div></div>
+
+    <header>
+        <img src="english.png"> 
+        <span>Translation Lists 6</span> 
+        <img src="spanish.png">
+    </header>
+
+    <div class="mode-selector">
+        <button id="btnEnEs" class="mode-btn active en-es" onclick="setMode('EN-ES')"><img src="english.png"> EN ➔ ES</button>
+        <button id="btnEsEn" class="mode-btn" onclick="setMode('ES-EN')"><img src="spanish.png"> ES ➔ EN</button>
+        <button id="btnExam" class="mode-btn exam" onclick="toggleExamMode()">🎓 EXAM MODE</button>
+    </div>
+
+    <div class="controls-top">
+        <select id="categorySelect" onchange="handleCategoryChange()">
+            <option value="ALL">🌟 All Units (0-6)</option>
+            <option value="MIXED">🧩 Mixed Selection</option>
+            <option value="Unit 0">Unit 0: Personal Info 🙋‍♀️</option>
+            <option value="Unit 1">Unit 1: School Life & Rules 🏫</option>
+            <option value="Unit 2">Unit 2: Food & Cooking 🍕</option>
+            <option value="Unit 3">Unit 3: World Records 🏙️</option>
+            <option value="Unit 4">Unit 4: Memories & Festivals 🎡</option>
+            <option value="Unit 5">Unit 5: Ancient Romans 🏺</option>
+            <option value="Unit 6">Unit 6: Summer Plans 🏕️</option>
+        </select>
+    </div>
+
+    <div id="mixPanel" class="mix-panel">
+        <strong>Select Units to Mix:</strong><hr>
+        <div class="mix-grid" id="mixCheckboxes"></div>
+        <button style="width:100%; margin-top:15px; background:var(--primary-dark); color:white; border:none; padding:12px; border-radius:10px; font-weight:bold; cursor:pointer;" onclick="applyMixSelection()">Apply Selection</button>
+    </div>
+
+    <div class="scene">
+        <div class="card" id="flashcard" onclick="flipCard()">
+            <div class="card-face front" id="faceFront">
+                <img id="flagFront" class="flag-label" src="english.png">
+                <div class="main-text" id="textFront">...</div>
+                <button class="sound-btn" onclick="event.stopPropagation(); playFaceAudio('front')">🔊</button>
+            </div>
+            <div class="card-face back" id="faceBack">
+                <img id="flagBack" class="flag-label" src="spanish.png">
+                <div class="main-text" id="textBack">...</div>
+                <button class="sound-btn" id="soundBtnBack" onclick="event.stopPropagation(); playFaceAudio('back')">🔊</button>
+                <div id="examActions" class="exam-actions">
+                    <button class="action-btn btn-no" onclick="event.stopPropagation(); markResult(false)">❌</button>
+                    <button class="action-btn btn-yes" onclick="event.stopPropagation(); markResult(true)">✅</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="nav-controls">
+        <button class="nav-btn" id="prevBtn" onclick="prevCard()">🔙</button>
+        <div class="counter" id="counterDisplay">0 / 0</div>
+        <button class="nav-btn" id="nextBtn" onclick="nextCard()">🔜</button>
+    </div>
+</div>
+
+<script>
+// Vocabulary
+const vocab = [
+    // Unit 0
+    {en:"What class are you in?", es:"¿En qué clase estás?", cat:"Unit 0"},
+    {en:"I’m in year 6.", es:"Estoy en sexto.", cat:"Unit 0"},
+    {en:"What are you like?", es:"¿Cómo eres?", cat:"Unit 0"},
+    {en:"I’m beautiful and a little shy.", es:"Soy guapo/a y un poco tímido/a.", cat:"Unit 0"},
+    {en:"What are you good at?", es:"¿En qué eres bueno?", cat:"Unit 0"},
+    {en:"I’m good at dancing but I’m bad at rollerblading.", es:"Se me da bien bailar pero se me da mal patinar.", cat:"Unit 0"},
+    {en:"What type of books do you like?", es:"¿Qué tipo de libros te gustan?", cat:"Unit 0"},
+    {en:"I like fantasy books and detective novels.", es:"Me gustan los libros de fantasía y las novelas de detectives.", cat:"Unit 0"},
+    {en:"What do you like to do in your free time?", es:"¿Qué te gusta hacer en tu tiempo libre?", cat:"Unit 0"},
+    {en:"In my free time, I like listening to music. I am a big music fan.", es:"En mi tiempo libre me gusta escuchar música. Soy un gran fan.", cat:"Unit 0"},
+    {en:"How often does he train handball?", es:"¿Con qué frecuencia entrena balonmano?", cat:"Unit 0"},
+    {en:"He is on the school basketball team.", es:"Él está en el equipo de baloncesto del colegio.", cat:"Unit 0"},
+    {en:"She writes on her blog every week.", es:"Ella escribe en su blog todas las semanas.", cat:"Unit 0"},
+    {en:"At the weekend, she usually meets her friends and plays games online.", es:"Los findes ella suele quedar con amigos y jugar online.", cat:"Unit 0"},
+    {en:"Do you use internet for homework? Yes, I do", es:"¿Usas internet para los deberes? Sí.", cat:"Unit 0"},
+    {en:"What’s your email address?", es:"¿Cuál es tu dirección de correo electrónico?", cat:"Unit 0"},
+    {en:"My email address is martin@gmail.com", es:"Mi dirección de correo es martin@gmail.com", cat:"Unit 0"},
+    {en:"What games do you play?", es:"¿A qué juegos juegas?", cat:"Unit 0"},
+    {en:"What are your hobbies?", es:"¿Cuáles son tus aficiones?", cat:"Unit 0"},
+    {en:"There are one hundred and sixty-eight hours in a week", es:"Hay ciento sesenta y ocho horas en una semana.", cat:"Unit 0"},
+    {en:"Mount Everest is eight thousand, eight hundred and forty-eight metres high.", es:"El Everest mide ocho mil ochocientos cuarenta y ocho metros.", cat:"Unit 0"},
+    {en:"There are about six thousand, five hundred languages in the world.", es:"Hay unos seis mil quinientos idiomas en el mundo.", cat:"Unit 0"},
+    {en:"The Great Wall of China is about two thousand, three hundred years old.", es:"La Gran Muralla China tiene unos dos mil trescientos años.", cat:"Unit 0"},
+    // Unit 1
+    {en:"My school’s name is A Paz-Tintureira.", es:"El nombre de mi colegio es A Paz-Tintureira.", cat:"Unit 1"},
+    {en:"Its address is 42, Fragoselo street.", es:"Su dirección es calle Fragoselo, 42.", cat:"Unit 1"},
+    {en:"There are about 200 students and 18 teachers.", es:"Hay unos 200 alumnos y 18 profesores.", cat:"Unit 1"},
+    {en:"School starts at quarter past nine.", es:"El colegio empieza a las nueve y cuarto.", cat:"Unit 1"},
+    {en:"Lunch is at quarter past two and we go home at half past three.", es:"Comemos a las 2:15 y nos vamos a casa a las 3:30.", cat:"Unit 1"},
+    {en:"We have a break time at twelve o’clock.", es:"Tenemos un descanso a las doce.", cat:"Unit 1"},
+    {en:"The recess is in the playground and it is 30 minutes long.", es:"El recreo es en el patio y dura 30 minutos.", cat:"Unit 1"},
+    {en:"At my school, we have got these subjects: Maths, English, Science ...", es:"En mi cole tenemos: Mates, Inglés, Ciencias...", cat:"Unit 1"},
+    {en:"There are special rooms like a library, a gym and a teacher’s room.", es:"Hay salas especiales: biblioteca, gimnasio y sala de profes.", cat:"Unit 1"},
+    {en:"There is a canteen, a big playground with a vegetable garden and a sports area too", es:"Hay comedor, patio con huerto y zona deportiva.", cat:"Unit 1"},
+    {en:"There isn’t a computer room or a lab.", es:"No hay sala de ordenadores ni laboratorio.", cat:"Unit 1"},
+    {en:"The summer holidays are in July and August.", es:"Las vacaciones de verano son en julio y agosto.", cat:"Unit 1"},
+    {en:"At my school, we have got some rules.", es:"En mi colegio tenemos algunas normas.", cat:"Unit 1"},
+    {en:"We have to listen to our teachers.", es:"Tenemos que escuchar a nuestros profesores.", cat:"Unit 1"},
+    {en:"We have to work hard and do our homework every day.", es:"Tenemos que trabajar duro y hacer los deberes a diario.", cat:"Unit 1"},
+    {en:"We have to be kind to other children.", es:"Tenemos que ser amables con otros niños.", cat:"Unit 1"},
+    {en:"We have to help in the library.", es:"Tenemos que ayudar en la biblioteca.", cat:"Unit 1"},
+    {en:"We have to work quietly.", es:"Tenemos que trabajar en silencio.", cat:"Unit 1"},
+    {en:"Do you have to wear a uniform? No, I don’t", es:"¿Tienes que llevar uniforme? No.", cat:"Unit 1"},
+    {en:"We don’t have to wear a uniform.", es:"No tenemos que llevar uniforme.", cat:"Unit 1"},
+    {en:"What do you have to wear for PE?", es:"¿Qué tienes que llevar para Educación Física?", cat:"Unit 1"},
+    {en:"For PE, we have to wear tracksuit and trainers.", es:"Para E.F. tenemos que llevar chándal y zapatillas.", cat:"Unit 1"},
+    {en:"What subjects are you good at? I am good at Maths.", es:"¿Qué se te da bien? Soy bueno en Matemáticas.", cat:"Unit 1"},
+    {en:"What time do you have to be at school?", es:"¿A qué hora tienes que estar en el colegio?", cat:"Unit 1"},
+    {en:"Is there a gym in your school? Yes, There is.", es:"¿Hay un gimnasio en tu colegio? Sí, lo hay.", cat:"Unit 1"},
+    // Unit 2
+    {en:"There are some potatoes and onions in the cupboard.", es:"Hay algunas patatas y cebollas en el armario.", cat:"Unit 2"},
+    {en:"There are some eggs in the fridge too.", es:"También hay algunos huevos en la nevera.", cat:"Unit 2"},
+    {en:"There is some bread on the table.", es:"Hay algo de pan sobre la mesa.", cat:"Unit 2"},
+    {en:"There aren’t any carrots in the basket.", es:"No hay ninguna zanahoria en la cesta.", cat:"Unit 2"},
+    {en:"There aren’t any nuts in this recipe, but there is some flour.", es:"No hay frutos secos en esta receta, pero sí harina.", cat:"Unit 2"},
+    {en:"Is there any sugar in the cupboard? Yes, there is.", es:"¿Hay azúcar en el armario? Sí.", cat:"Unit 2"},
+    {en:"Are there any peas in the fridge? Yes, there are.", es:"¿Hay guisantes en la nevera? Sí.", cat:"Unit 2"},
+    {en:"Is there any milk in the kitchen? No, there isn’t.", es:"¿Hay leche en la cocina? No.", cat:"Unit 2"},
+    {en:"I haven’t got any flour for the chocolate cake.", es:"No tengo harina para el pastel de chocolate.", cat:"Unit 2"},
+    {en:"My favourite dish is the omelette.", es:"Mi plato favorito es la tortilla.", cat:"Unit 2"},
+    {en:"I like eating healthy food.", es:"Mi gusta comer comida saludable.", cat:"Unit 2"},
+    {en:"I really like fruit and fish. I don’t like fast food / junk food.", es:"Me gusta la fruta y el pescado. No la comida basura.", cat:"Unit 2"},
+    {en:"I prefer savoury food to sweet food.", es:"Prefiero la comida salada a la dulce.", cat:"Unit 2"},
+    {en:"I love pancakes and cheese pizza for dinner.", es:"Me encantan las tortitas y la pizza de queso para cenar.", cat:"Unit 2"},
+    {en:"I hate asparagus and onions, they are horrible.", es:"Odio los espárragos y las cebollas, son horribles.", cat:"Unit 2"},
+    {en:"I don’t like it because it is spicy and salty.", es:"No me gusta porque es picante y salado.", cat:"Unit 2"},
+    {en:"It’s a delicious dish made with meat and vegetables.", es:"Es un plato delicioso de carne y verduras.", cat:"Unit 2"},
+    {en:"I’ve got all the ingredients for the recipe.", es:"Tengo todos los ingredientes para la receta.", cat:"Unit 2"},
+    {en:"I think Indian food is very spicy.", es:"Creo que la comida india es muy picante.", cat:"Unit 2"},
+    {en:"You can make a blueberry pie for the party.", es:"Puedes hacer un pastel de arándanos para la fiesta.", cat:"Unit 2"},
+    {en:"Can I have a ham and asparagus pizza, please?", es:"¿Puedo tomar una pizza de jamón y espárragos, por favor?", cat:"Unit 2"},
+    {en:"Do you like the food? Yes, I do", es:"¿Te gusta la comida? Sí.", cat:"Unit 2"},
+    // Unit 3
+    {en:"London is the biggest city in the UK", es:"Londres es la ciudad más grande del Reino Unido.", cat:"Unit 3"},
+    {en:"The most popular museum in London is the British museum", es:"El museo más popular de Londres es el Británico.", cat:"Unit 3"},
+    {en:"The highest building in Dubai is the Burj Khalifa", es:"El edificio más alto de Dubai es el Burj Khalifa.", cat:"Unit 3"},
+    {en:"Central Park is the biggest park in New York", es:"Central Park es el parque más grande de Nueva York.", cat:"Unit 3"},
+    {en:"The fastest train in the world is in China", es:"El tren más rápido del mundo está en China.", cat:"Unit 3"},
+    {en:"Mont Blanc is the highest mountain in Europe", es:"El Mont Blanc es la montaña más alta de Europa.", cat:"Unit 3"},
+    {en:"The most famous building in Paris is the Eiffel Tower", es:"El edificio más famoso de París es la Torre Eiffel.", cat:"Unit 3"},
+    {en:"Spring is the most beautiful season in my country", es:"La primavera es la estación más bonita de mi país.", cat:"Unit 3"},
+    {en:"Castrelos is the most peaceful place in Vigo", es:"Castrelos es el lugar más tranquilo de Vigo.", cat:"Unit 3"},
+    {en:"Madrid is the noisiest city in Spain", es:"Madrid es la ciudad más ruidosa de España.", cat:"Unit 3"},
+    {en:"My father is the tallest person in my family", es:"Mi padre es la persona más alta de mi familia.", cat:"Unit 3"},
+    {en:"My mother is the most intelligent person in my family", es:"Mi madre es la persona más inteligente de mi familia.", cat:"Unit 3"},
+    {en:"Where’s the scariest rollercoaster in Europe?", es:"¿Dónde está la montaña rusa que más miedo da?", cat:"Unit 3"},
+    {en:"What’s the most dangerous bridge in the world?", es:"¿Cuál es el puente más peligroso del mundo?", cat:"Unit 3"},
+    {en:"How old is the oldest museum in America?", es:"¿Cuántos años tiene el museo más antiguo de América?", cat:"Unit 3"},
+    {en:"How cold is it in winter in England?", es:"¿Qué frío hace en invierno en Inglaterra?", cat:"Unit 3"},
+    {en:"How fast does a train go?", es:"¿A qué velocidad va un tren?", cat:"Unit 3"},
+    {en:"How tall is your friend?", es:"¿Qué altura tiene tu amigo?", cat:"Unit 3"},
+    {en:"How long is the River Nile?", es:"¿Qué longitud tiene el río Nilo?", cat:"Unit 3"},
+    {en:"How high is the Statue of Liberty?", es:"¿Qué altura tiene la Estatua de la Libertad?", cat:"Unit 3"},
+    {en:"How long does a kangaroo live?", es:"¿Cuánto tiempo vive un canguro?", cat:"Unit 3"},
+    {en:"The river Thames is 346 kilometres long", es:"El río Támesis tiene 346 kilómetros de largo.", cat:"Unit 3"},
+    {en:"That skyscraper is 310 metres high", es:"Ese rascacielos tiene 310 metros de altura.", cat:"Unit 3"},
+    // Unit 4
+    {en:"I was at a music festival last weekend with my father.", es:"Estuve en un festival de música con mi padre.", cat:"Unit 4"},
+    {en:"Last Monday, I bought a bag and made a cake.", es:"El lunes pasado compré un bolso e hice un pastel.", cat:"Unit 4"},
+    {en:"Yesterday, we went to a spring festival in the park.", es:"Ayer fuimos a un festival de primavera en el parque.", cat:"Unit 4"},
+    {en:"My friend made a video and I took some photos.", es:"Mi amigo hizo un vídeo y yo saqué algunas fotos.", cat:"Unit 4"},
+    {en:"It was cold, I wore a coat and a hat all day.", es:"Hacía frío, llevé abrigo y gorro todo el día.", cat:"Unit 4"},
+    {en:"We drank a hot chocolate to keep warm.", es:"Bebimos un chocolate caliente para calentarnos.", cat:"Unit 4"},
+    {en:"They played basketball with their cousins.", es:"Ellos jugaron al baloncesto con sus primos.", cat:"Unit 4"},
+    {en:"My mother bought four tickets to go to a film festival.", es:"Mi madre compró cuatro entradas para el cine.", cat:"Unit 4"},
+    {en:"I made a birthday card for Susan’s birthday.", es:"Hice una tarjeta de cumpleaños para Susan.", cat:"Unit 4"},
+    {en:"He saw lots of fireworks at the weekend.", es:"Él vio muchos fuegos artificiales el fin de semana.", cat:"Unit 4"},
+    {en:"Everyone wore white clothes and hats.", es:"Todo el mundo llevó ropa blanca y gorros.", cat:"Unit 4"},
+    {en:"I had spaghetti and drank some mango juice.", es:"Comí espaguetis y bebí zumo de mango.", cat:"Unit 4"},
+    {en:"They met some friends at quarter past seven.", es:"Quedaron con unos amigos a las siete y cuarto.", cat:"Unit 4"},
+    {en:"We saw a hilarious film at the cinema.", es:"Vimos una película divertidísima en el cine.", cat:"Unit 4"},
+    {en:"Musicians sang songs and played drums.", es:"Los músicos cantaron y tocaron tambores.", cat:"Unit 4"},
+    {en:"Marta had an English exam yesterday.", es:"Marta tuvo un examen de inglés ayer.", cat:"Unit 4"},
+    {en:"You made a snowman in her garden.", es:"Hiciste un muñeco de nieve en su jardín.", cat:"Unit 4"},
+    {en:"Six days ago, I went to a concert.", es:"Hace seis días fui a un concierto.", cat:"Unit 4"},
+    {en:"The day after your birthday, I had a Maths exam.", es:"El día después de tu cumple tuve examen de mates.", cat:"Unit 4"},
+    {en:"Two days before the party, I was ill.", es:"Dos días antes de la fiesta estuve enfermo/a.", cat:"Unit 4"},
+    {en:"The dance competition was two weeks ago.", es:"El concurso de baile fue hace dos semanas.", cat:"Unit 4"},
+    {en:"Last week, I made a delicious cake with my grandmother.", es:"La semana pasada hice un pastel con mi abuela.", cat:"Unit 4"},
+    {en:"My mother was glad because I did my homework very well.", es:"Mi madre estaba contenta por mis deberes.", cat:"Unit 4"},
+    // Unit 5
+    {en:"My project was about children in Roman times.", es:"Mi proyecto trataba sobre los niños romanos.", cat:"Unit 5"},
+    {en:"The Romans built the first bridge over the River Times 2,000 years ago.", es:"Construyeron el primer puente sobre el Támesis hace 2.000 años.", cat:"Unit 5"},
+    {en:"Romans built aqueducts, walls, roads, bridges and amphitheatres.", es:"Construyeron acueductos, murallas, calzadas...", cat:"Unit 5"},
+    {en:"At the museum, I took photos of Roman coins, statues and mosaics.", es:"Saqué fotos de monedas, estatuas y mosaicos.", cat:"Unit 5"},
+    {en:"I watched a documentary about people in ancient Rome.", es:"Vi un documental sobre la antigua Roma.", cat:"Unit 5"},
+    {en:"Dogs were the most popular pets.", es:"Los perros eran las mascotas más populares.", cat:"Unit 5"},
+    {en:"The coins were made of gold, silver and bronze.", es:"Las monedas eran de oro, plata y bronce.", cat:"Unit 5"},
+    {en:"I looked at some websites about Roman clothes.", es:"Miré sitios web sobre la ropa romana.", cat:"Unit 5"},
+    {en:"The emperor wore a purple toga and the children wore tunics.", es:"El emperador llevaba toga y los niños túnicas.", cat:"Unit 5"},
+    {en:"People used brooches to tie their clothes.", es:"Usaban broches para abrocharse la ropa.", cat:"Unit 5"},
+    {en:"What did Roman children wear?", es:"¿Qué llevaban los niños romanos?", cat:"Unit 5"},
+    {en:"When did the Romans build that aqueduct?", es:"¿Cuándo construyeron ese acueducto?", cat:"Unit 5"},
+    {en:"What did they see at the museum?", es:"¿Qué vieron en el museo?", cat:"Unit 5"},
+    {en:"Did they wear sandals? Yes, they did", es:"¿Llevaban sandalias? Sí.", cat:"Unit 5"},
+    {en:"Where did they buy fruit? They bought fruit, vegetables and fish at the market.", es:"Compraban fruta, verdura y pescado en el mercado.", cat:"Unit 5"},
+    {en:"What did they have for breakfast? Romans usually had bread for breakfast.", es:"¿Qué desayunaban? Solían desayunar pan.", cat:"Unit 5"},
+    {en:"Did they eat with knives and forks? No, they didn’t", es:"¿Comían con cuchillo y tenedor? No.", cat:"Unit 5"},
+    {en:"They usually ate with their hands.", es:"Normalmente comían con las manos.", cat:"Unit 5"},
+    {en:"They used spoons for eating soup.", es:"Usaban cucharas para comer sopa.", cat:"Unit 5"},
+    {en:"The Romans had dinner at about four o’clock in the afternoon.", es:"Los romanos cenaban sobre las cuatro de la tarde.", cat:"Unit 5"},
+    {en:"Did you go to Rome? No, I didn’t", es:"¿Fuiste a Roma? No.", cat:"Unit 5"},
+    {en:"Where did you go?", es:"¿A dónde fuiste?", cat:"Unit 5"},
+    {en:"What did you do?", es:"¿Qué hiciste?", cat:"Unit 5"},
+    {en:"Who did you go with?", es:"¿Con quién fuiste?", cat:"Unit 5"},
+    // Unit 6
+    {en:"Have you got plans for the summer? Yes, I have", es:"¿Tienes planes para el verano? Sí.", cat:"Unit 6"},
+    {en:"Are you going on holiday? Yes, I am", es:"¿Te vas de vacaciones? Sí.", cat:"Unit 6"},
+    {en:"I’m going to stay at home.", es:"Me voy a quedar en casa.", cat:"Unit 6"},
+    {en:"We’re going to go to an adventure camp.", es:"Vamos a ir a un campamento de aventura.", cat:"Unit 6"},
+    {en:"At the camp, there’s a lake for swimming and go kayaking.", es:"Hay un lago para nadar y hacer kayak.", cat:"Unit 6"},
+    {en:"They’re going to have barbecues, sing songs and tell stories.", es:"Van a hacer barbacoas, cantar y contar historias.", cat:"Unit 6"},
+    {en:"She’s going to take a tent and a sleeping bag.", es:"Ella va a llevar tienda y saco de dormir.", cat:"Unit 6"},
+    {en:"He’s going to go to Paris with his family.", es:"Él va a ir a París con su familia.", cat:"Unit 6"},
+    {en:"My cousins are going to go hiking.", es:"Mis primos van a ir de senderismo.", cat:"Unit 6"},
+    {en:"My grandparents are going to visit Scotland too.", es:"Mis abuelos también van a visitar Escocia.", cat:"Unit 6"},
+    {en:"They aren’t going to stay at a hotel.", es:"No se van a quedar en un hotel.", cat:"Unit 6"},
+    {en:"You’re going to take a map, a compass and a rucksack.", es:"Vas a llevar un mapa, brújula y mochila.", cat:"Unit 6"},
+    {en:"He isn’t going to take a towel or a swimsuit.", es:"Él no va a llevar toalla ni bañador.", cat:"Unit 6"},
+    {en:"My aunt isn’t going to sleep in a tent.", es:"Mi tía no va a dormir en una tienda.", cat:"Unit 6"},
+    {en:"Is she going to visit a castle? Yes, she is", es:"¿Va ella a visitar un castillo? Sí.", cat:"Unit 6"},
+    {en:"Are they going to take a boat? No, they aren’t", es:"¿Van a coger un barco? No.", cat:"Unit 6"},
+    {en:"You should take a small rucksack with a water bottle and sun cream.", es:"Deberías llevar mochila, agua y crema solar.", cat:"Unit 6"},
+    {en:"She should eat something cold.", es:"Ella debería comer algo frío.", cat:"Unit 6"},
+    {en:"He should drink lots of water.", es:"Él debería beber mucha agua.", cat:"Unit 6"},
+    {en:"They should take water with them.", es:"Ellos deberían llevar agua con ellos.", cat:"Unit 6"},
+    {en:"We should check the weather before we go out.", es:"Deberíamos mirar el tiempo antes de salir.", cat:"Unit 6"},
+    {en:"You shouldn’t go near animals.", es:"No deberías acercarte a los animales.", cat:"Unit 6"},
+    {en:"You shouldn’t make fires.", es:"No deberías hacer fuego.", cat:"Unit 6"},
+    {en:"You shouldn’t drop litter.", es:"No deberías tirar basura.", cat:"Unit 6"},
+    {en:"You shouldn’t leave gates open.", es:"No deberías dejar las puertas abiertas.", cat:"Unit 6"}
+];
+
+let currentList = [], currentIndex = 0, isFlipped = false;
+let gameMode = 'EN-ES', isExamMode = false;
+let seconds = 0, timerInterval = null, correct = 0, wrong = 0, currentStreak = 0;
+
+const ui = {
+    card: document.getElementById("flashcard"),
+    faceFront: document.getElementById("faceFront"),
+    faceBack: document.getElementById("faceBack"),
+    textFront: document.getElementById("textFront"),
+    textBack: document.getElementById("textBack"),
+    flagFront: document.getElementById("flagFront"),
+    flagBack: document.getElementById("flagBack"),
+    counter: document.getElementById("counterDisplay"),
+    prevBtn: document.getElementById("prevBtn"),
+    nextBtn: document.getElementById("nextBtn"),
+    catSelect: document.getElementById("categorySelect"),
+    examBar: document.getElementById("examBar"),
+    timer: document.getElementById("timer"),
+    streak: document.getElementById("streak"),
+    scoreCorrect: document.getElementById("scoreCorrect"),
+    scoreWrong: document.getElementById("scoreWrong"),
+    examActions: document.getElementById("examActions"),
+    progressBar: document.getElementById("progressBar"),
+    mixPanel: document.getElementById("mixPanel"),
+    mixCheckboxes: document.getElementById("mixCheckboxes")
+};
+
+// IMPROVED AUDIO FEEDBACK
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+function playCustomSound(type) {
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.connect(gain); gain.connect(audioCtx.destination);
+    if (type === 'success') {
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(523.25, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.2);
+        gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+        osc.start(); osc.stop(audioCtx.currentTime + 0.3);
+    } else {
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+        osc.frequency.setValueAtTime(100, audioCtx.currentTime + 0.2);
+        gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
+        osc.start(); osc.stop(audioCtx.currentTime + 0.4);
+    }
+}
+
+function initMixCheckboxes() {
+    const units = [
+        {val: "Unit 0", name: "Unit 0: Personal Info"},
+        {val: "Unit 1", name: "Unit 1: School & Rules"},
+        {val: "Unit 2", name: "Unit 2: Food"},
+        {val: "Unit 3", name: "Unit 3: World Records"},
+        {val: "Unit 4", name: "Unit 4: Memories"},
+        {val: "Unit 5", name: "Unit 5: Romans"},
+        {val: "Unit 6", name: "Unit 6: Summer Plans"}
+    ];
+    ui.mixCheckboxes.innerHTML = units.map(u => `
+        <div style="display:flex; align-items:center; gap:8px;">
+            <input type="checkbox" id="chk_${u.val.replace(' ','')}" value="${u.val}" style="width:18px; height:18px;"> 
+            <label for="chk_${u.val.replace(' ','')}" style="font-weight:bold; font-size:0.85rem;">${u.name}</label>
+        </div>
+    `).join('');
+}
+
+function setMode(mode) {
+    gameMode = mode;
+    document.getElementById("btnEnEs").className = 'mode-btn en-es' + (mode === 'EN-ES' ? ' active' : '');
+    document.getElementById("btnEsEn").className = 'mode-btn es-en' + (mode === 'ES-EN' ? ' active' : '');
+    resetCardFace(); updateUI();
+}
+
+function toggleExamMode() {
+    isExamMode = !isExamMode;
+    document.getElementById("btnExam").classList.toggle("active", isExamMode);
+    ui.card.classList.toggle("exam-active", isExamMode);
+    ui.examBar.style.display = isExamMode ? "flex" : "none";
+    ui.examActions.style.display = isExamMode ? "flex" : "none";
+    if(isExamMode) startExam(); else resetExam();
+}
+
+function startExam() {
+    resetExam();
+    timerInterval = setInterval(() => {
+        seconds++;
+        ui.timer.textContent = `${String(Math.floor(seconds / 60)).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}`;
+    }, 1000);
+}
+
+function resetExam() {
+    clearInterval(timerInterval);
+    seconds = 0; correct = 0; wrong = 0; currentStreak = 0;
+    ui.timer.textContent = "00:00"; ui.scoreCorrect.textContent = "0"; ui.scoreWrong.textContent = "0"; ui.streak.textContent = "0";
+}
+
+function markResult(isCorrect) {
+    if(isCorrect) { 
+        correct++; currentStreak++; playCustomSound('success');
+    } else { 
+        wrong++; currentStreak = 0; playCustomSound('error');
+    }
+    ui.scoreCorrect.textContent = correct; ui.scoreWrong.textContent = wrong; ui.streak.textContent = currentStreak;
+    if(currentIndex === currentList.length - 1) {
+        clearInterval(timerInterval);
+        alert(`Finished!\nScore: ${correct}/${currentList.length}\nTime: ${ui.timer.textContent}`);
+        toggleExamMode();
+    } else nextCard();
+}
+
+function handleCategoryChange() {
+    const val = ui.catSelect.value;
+    if (val === "MIXED") ui.mixPanel.style.display = "block";
+    else { ui.mixPanel.style.display = "none"; changeCategory(); }
+}
+
+function applyMixSelection() {
+    const selected = Array.from(ui.mixCheckboxes.querySelectorAll('input:checked')).map(cb => cb.value);
+    if (selected.length === 0) { alert("Please select units."); return; }
+    currentList = shuffleArray([...vocab.filter(item => selected.includes(item.cat))]);
+    ui.mixPanel.style.display = "none";
+    currentIndex = 0; resetCardFace(); updateUI();
+}
+
+function changeCategory() {
+    const val = ui.catSelect.value;
+    if(val === "ALL") currentList = shuffleArray([...vocab]);
+    else {
+        const unitId = val.includes(':') ? val.split(':')[0].trim() : val;
+        currentList = shuffleArray(vocab.filter(item => item.cat === unitId));
+    }
+    currentIndex = 0; resetCardFace(); updateUI();
+}
+
+function updateUI() {
+    if(currentList.length === 0) return;
+    const item = currentList[currentIndex];
+    const isEnMode = gameMode === 'EN-ES';
+    ui.faceFront.className = 'card-face front ' + (isEnMode ? 'lang-en' : 'lang-es');
+    ui.faceBack.className = 'card-face back ' + (isEnMode ? 'lang-es' : 'lang-en');
+    ui.textFront.textContent = isEnMode ? item.en : item.es;
+    ui.textBack.textContent = isEnMode ? item.es : item.en;
+    ui.flagFront.src = isEnMode ? "english.png" : "spanish.png";
+    ui.flagBack.src = isEnMode ? "spanish.png" : "english.png";
+    ui.counter.textContent = `${currentIndex + 1} / ${currentList.length}`;
+    ui.progressBar.style.width = `${((currentIndex + 1) / currentList.length) * 100}%`;
+    ui.prevBtn.disabled = (currentIndex === 0);
+    ui.nextBtn.disabled = (currentIndex === currentList.length - 1);
+}
+
+function flipCard() {
+    isFlipped = !isFlipped;
+    ui.card.classList.toggle("is-flipped", isFlipped);
+}
+
+function shuffleArray(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+    }
+    return array;
+}
+
+function resetCardFace() { isFlipped = false; ui.card.classList.remove("is-flipped"); }
+function nextCard() { if(currentIndex < currentList.length - 1) { currentIndex++; resetCardFace(); setTimeout(updateUI, 150); } }
+function prevCard() { if(currentIndex > 0) { currentIndex--; resetCardFace(); setTimeout(updateUI, 150); } }
+
+function playFaceAudio(face) {
+    window.speechSynthesis.cancel();
+    const item = currentList[currentIndex];
+    const isEnMode = gameMode === 'EN-ES';
+    let text, lang;
+    if (face === 'front') {
+        text = isEnMode ? item.en : item.es;
+        lang = isEnMode ? "en-GB" : "es-ES";
+    } else {
+        text = isEnMode ? item.es : item.en;
+        lang = isEnMode ? "es-ES" : "en-GB";
+    }
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = lang;
+    window.speechSynthesis.speak(utterance);
+}
+
+initMixCheckboxes();
+changeCategory();
+</script>
+</body>
+</html>
